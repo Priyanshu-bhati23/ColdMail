@@ -1,5 +1,6 @@
 # Root-level ignores
 node_modules/
+.env.local
 .DS_Store
 *.log
 npm-debug.log*
