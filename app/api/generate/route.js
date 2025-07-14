@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 export async function POST(req) {
-  console.log('🔑 OPENROUTER_API_KEY:', process.env.OPENROUTER_API_KEY || 'NOT FOUND');
+  console.log('🔑 API KEY Present:', !!process.env.OPENROUTER_API_KEY);
 
   const body = await req.json();
   const { name, target, offer } = body;
@@ -21,7 +21,7 @@ Make it persuasive and under 100 words.
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        Authorization: `Bearer ${process.env.OPENROUTE_API_KEY}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://coldmail-green.vercel.app',
         'X-Title': 'ColdReach MVP',
@@ -35,10 +35,16 @@ Make it persuasive and under 100 words.
 
     const data = await response.json();
 
-    console.log('🧠 OpenRouter Response:', JSON.stringify(data, null, 2));
+    console.log('🧠 OpenRouter Full Response:', JSON.stringify(data, null, 2));
+
+    if (data?.error) {
+      return NextResponse.json(
+        { error: data.error.message || 'Error from OpenRouter' },
+        { status: data.error.code || 500 }
+      );
+    }
 
     const generated = data?.choices?.[0]?.message?.content;
-
     if (!generated) {
       return NextResponse.json(
         { error: 'No content returned from OpenRouter', raw: data },
@@ -48,9 +54,10 @@ Make it persuasive and under 100 words.
 
     return NextResponse.json({ generatedEmail: generated });
   } catch (error) {
-    const text = await error?.response?.text?.();
     console.error('❌ OpenRouter fetch error:', error);
-    console.error('🔍 Raw response text:', text);
-    return NextResponse.json({ error: 'Failed to generate email', details: text || error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to generate email', details: error.message },
+      { status: 500 }
+    );
   }
 }
